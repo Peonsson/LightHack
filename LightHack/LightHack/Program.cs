@@ -8,7 +8,6 @@ namespace LightHack
 {
     class Program
     {
-
         [DllImport("kernel32")]
         public static extern Int32 ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, [In, Out] byte[] buffer, UInt32 size, out IntPtr lpNumberOfBytesRead);
         [DllImport("kernel32")]
@@ -41,7 +40,6 @@ namespace LightHack
         static void Main(string[] args)
         {
             Console.WriteLine("classictibia light-hack..");
-
             UInt32 Adr_BListBegin = 0x1C68B4;
             UInt32 Adr_BL_Light_Offset = 0x70;
             UInt32 Adr_BL_Brightness_Offset = 0x74;
@@ -53,12 +51,12 @@ namespace LightHack
                 foreach (Process proc in processes)
                 {
                     int counter = 0;
-                    UInt32 base1 = 0;
+                    UInt32 charBaseAdr = 0;
                     while (true)
                     {
                         if (ReadString(proc.MainModule.BaseAddress.ToInt32() + Adr_BListBegin + (0x9C * counter), proc.Handle).Equals("Friend") || ReadString(proc.MainModule.BaseAddress.ToInt32() + Adr_BListBegin + (0x9C * counter), proc.Handle).Equals("Peon"))
                         {
-                            base1 = (uint)proc.MainModule.BaseAddress.ToInt32() + Adr_BListBegin + (0x9C * (uint)counter);
+                            charBaseAdr = (uint)proc.MainModule.BaseAddress.ToInt32() + Adr_BListBegin + (0x9C * (uint)counter);
                             break;
                         }
                         counter++;
@@ -70,13 +68,13 @@ namespace LightHack
                         }
                     }
 
-                    if (ReadInt32(base1 + Adr_BL_Light_Offset, proc.Handle) < 12)
+                    if (ReadInt32(charBaseAdr + Adr_BL_Light_Offset, proc.Handle) < 12)
                     {
-                        WriteMemory((IntPtr)(base1 + Adr_BL_Light_Offset), BitConverter.GetBytes(12), out bytesOut, proc.Handle);
+                        WriteMemory((IntPtr)(charBaseAdr + Adr_BL_Light_Offset), BitConverter.GetBytes(12), out bytesOut, proc.Handle);
                     }
-                    if (ReadInt32(base1 + Adr_BL_Brightness_Offset, proc.Handle) < 215)
+                    if (ReadInt32(charBaseAdr + Adr_BL_Brightness_Offset, proc.Handle) < 215)
                     {
-                        WriteMemory((IntPtr)(base1 + Adr_BL_Brightness_Offset), BitConverter.GetBytes(215), out bytesOut, proc.Handle);
+                        WriteMemory((IntPtr)(charBaseAdr + Adr_BL_Brightness_Offset), BitConverter.GetBytes(215), out bytesOut, proc.Handle);
                     }
                 }
                 Thread.Sleep(25);
