@@ -20,6 +20,7 @@ namespace LightHack
             ReadProcessMemory(Handle, new IntPtr(Address), buffer, BytesToRead, out bytesRead);
             return buffer;
         }
+
         public static int ReadInt32(Int64 Address, IntPtr Handle)
         {
             return BitConverter.ToInt32(ReadBytes(Handle, Address, 4), 0);
@@ -47,37 +48,44 @@ namespace LightHack
 
             while (true)
             {
-                Process[] processes = Process.GetProcessesByName("classictibia");
-                foreach (Process proc in processes)
+                try
                 {
-                    int counter = 0;
-                    UInt32 charBaseAdr = 0;
-                    while (true)
+                    Process[] processes = Process.GetProcessesByName("classictibia");
+                    foreach (Process proc in processes)
                     {
-                        if (ReadString(proc.MainModule.BaseAddress.ToInt32() + Adr_BListBegin + (0x9C * counter), proc.Handle).Equals("Friend") || ReadString(proc.MainModule.BaseAddress.ToInt32() + Adr_BListBegin + (0x9C * counter), proc.Handle).Equals("Peon"))
+                        int counter = 0;
+                        UInt32 charBaseAdr = 0;
+                        while (true)
                         {
-                            charBaseAdr = (uint)proc.MainModule.BaseAddress.ToInt32() + Adr_BListBegin + (0x9C * (uint)counter);
-                            break;
+                            if (ReadString(proc.MainModule.BaseAddress.ToInt32() + Adr_BListBegin + (0x9C * counter), proc.Handle).Equals("Friend") || ReadString(proc.MainModule.BaseAddress.ToInt32() + Adr_BListBegin + (0x9C * counter), proc.Handle).Equals("Peon"))
+                            {
+                                charBaseAdr = (uint)proc.MainModule.BaseAddress.ToInt32() + Adr_BListBegin + (0x9C * (uint)counter);
+                                break;
+                            }
+                            counter++;
+                            if (counter > 250)
+                            {
+                                Console.WriteLine("An unexpected error has occured.");
+                                Console.ReadLine();
+                                return;
+                            }
                         }
-                        counter++;
-                        if (counter > 250)
-                        {
-                            Console.WriteLine("An unexpected error has occured.");
-                            Console.ReadLine();
-                            return;
-                        }
-                    }
 
-                    if (ReadInt32(charBaseAdr + Adr_BL_Light_Offset, proc.Handle) < 12)
-                    {
-                        WriteMemory((IntPtr)(charBaseAdr + Adr_BL_Light_Offset), BitConverter.GetBytes(12), out bytesOut, proc.Handle);
+                        if (ReadInt32(charBaseAdr + Adr_BL_Light_Offset, proc.Handle) < 12)
+                        {
+                            WriteMemory((IntPtr)(charBaseAdr + Adr_BL_Light_Offset), BitConverter.GetBytes(12), out bytesOut, proc.Handle);
+                        }
+                        if (ReadInt32(charBaseAdr + Adr_BL_Brightness_Offset, proc.Handle) < 215)
+                        {
+                            WriteMemory((IntPtr)(charBaseAdr + Adr_BL_Brightness_Offset), BitConverter.GetBytes(215), out bytesOut, proc.Handle);
+                        }
                     }
-                    if (ReadInt32(charBaseAdr + Adr_BL_Brightness_Offset, proc.Handle) < 215)
-                    {
-                        WriteMemory((IntPtr)(charBaseAdr + Adr_BL_Brightness_Offset), BitConverter.GetBytes(215), out bytesOut, proc.Handle);
-                    }
+                    Thread.Sleep(25);
                 }
-                Thread.Sleep(25);
+                catch
+                {
+                    continue;
+                }
             }
         }
     }
